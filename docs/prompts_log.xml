@@ -185,4 +185,50 @@ Object format:
 - main.py contains no per-mode branching — it only calls create_quiz_mode and consumes the returned QuizMode
     </success_criteria>
   </prompt>
+  <prompt id="006" date="2026-05-21" milestone="Phase 3: The CLI &amp; Interaction">
+    <role>Senior Python engineer building a polished terminal user interface for the FlashcardQuizzer quiz engine</role>
+    <task>
+      Implement the interactive CLI layer that drives the existing QuizMode strategies, replacing the placeholder click-based entry point with an argparse-driven flow that supports colored feedback and graceful exit handling.
+    </task>
+    <context>
+      <application>FlashcardQuizzer — Python 3.9 CLI quiz tool</application>
+      <current_state>main.py uses click and only prints the loaded card count; QuizMode strategies (sequential, random, adaptive) and the create_quiz_mode factory are already implemented in utils/quiz_modes.py and utils/quiz_factory.py</current_state>
+      <integration_points>main.py wires utils.data_loader.load_flashcards, utils.quiz_factory.create_quiz_mode, and the new interactive session loop into a single end-to-end flow</integration_points>
+    </context>
+    <requirements>
+      <functional_requirements>
+- Replace click with argparse and expose -f / --file (required path), -m / --mode (sequential | random | adaptive, default sequential), and --stats (boolean flag) plus a --no-color escape hatch
+- Drive a per-card prompt loop that serves cards via QuizMode.next_card, normalizes the user's answer (lowercase, whitespace-collapsed), reports correctness back to the strategy via record_result, and accumulates per-session statistics
+- Render correct answers in ANSI green and incorrect answers in ANSI red, with auto-detection that disables color on non-TTY streams and when NO_COLOR is set in the environment
+- Accept "exit", "quit", or ":q" at any prompt to leave the session immediately; treat EOF (Ctrl+D) and SIGINT (Ctrl+C) the same way, with no traceback reaching the user
+- Print an end-of-session summary with totals and accuracy; when --stats is supplied, append a per-card breakdown showing correct and incorrect counts per question
+      </functional_requirements>
+      <extensibility_requirements>
+- Keep ANSI helpers, the session loop, and the entry point in separate modules so future UIs (e.g. a TUI or a web layer) can reuse the loop without inheriting argparse coupling
+      </extensibility_requirements>
+    </requirements>
+    <constraints>
+      <architecture_principles>Separation of concerns between argument parsing (main.py), terminal rendering (utils/colors.py), and the interactive loop with stats (utils/quiz_session.py)</architecture_principles>
+      <dependencies>Standard library only — argparse, dataclasses, typing; no colorama or click in the new code path</dependencies>
+      <style>Pass the project's pytest, mypy, and black configurations; respect disallow_untyped_defs for production code</style>
+      <ux>The CLI must never print a Python traceback on user-driven exit conditions (exit command, Ctrl+C, Ctrl+D, missing or malformed input file)</ux>
+    </constraints>
+    <test_categories>
+- Colors module: ANSI wrapping on, no-op when disabled, NO_COLOR environment variable honored, non-TTY streams auto-disable colors
+- Answer normalization and is_correct: case-insensitive matching, whitespace tolerance, punctuation remains significant
+- SessionStats: empty-session defaults, per-card accumulation, accuracy ratio
+- run_session loop: records correct and incorrect answers, exits on each EXIT_COMMANDS member, exits gracefully on KeyboardInterrupt and EOFError, completes naturally when the deck is exhausted, emits ANSI escapes only when color is enabled
+- render_summary: empty-session message, basic totals without --stats, per-card breakdown when --stats is on
+- argparse parser: short and long flag forms, required -f, rejection of unknown modes, default values for --mode, --stats, and color
+- main() integration: zero exit code on success, --stats reaches the summary, FlashcardDataError surfaces a friendly stderr message with exit code 1, KeyboardInterrupt is swallowed and exits cleanly
+    </test_categories>
+    <success_criteria>
+- python main.py -f data/glossary.json -m sequential runs interactively, displays green or red feedback per answer, and prints a summary on completion
+- Typing "exit" at any prompt terminates the session and prints a final summary with no traceback
+- Sending Ctrl+C at any prompt exits with code 0 and a single friendly message, no Python traceback
+- python main.py -f data/glossary.json --stats appends a per-card breakdown to the summary
+- python main.py -f path/that/does/not/exist.json prints a single-line error to stderr and exits with code 1
+- The full pytest suite passes with overall coverage at or above 80%
+    </success_criteria>
+  </prompt>
 </prompts_log>
