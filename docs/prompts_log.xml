@@ -142,4 +142,47 @@ Object format:
 - black --check and mypy both pass on the new and modified files
     </success_criteria>
   </prompt>
+  <prompt id="005" date="2026-05-21" milestone="Phase 2: Core Logic &amp; Design Patterns">
+    <role>Senior Python engineer applying behavioral and creational design patterns to the FlashcardQuizzer quiz engine</role>
+    <task>
+      Implement the quiz engine using the Strategy Pattern, exposing three interchangeable ordering strategies, and select the active strategy at runtime through a Factory Pattern driven by the existing --mode CLI flag.
+    </task>
+    <context>
+      <application>FlashcardQuizzer — Python 3.9 CLI quiz tool</application>
+      <current_architecture>main.py loads cards through utils.data_loader.load_flashcards and currently only prints the loaded card count and selected mode</current_architecture>
+      <integration_points>main.py passes the validated Flashcard list and the --mode string ("sequential" | "random" | "adaptive") into the new engine</integration_points>
+      <data_model>Flashcard is a frozen dataclass with non-empty string "front" and "back" fields, defined in utils/data_loader.py</data_model>
+    </context>
+    <requirements>
+      <functional_requirements>
+- Define a QuizMode abstract base class that exposes next_card() returning the next Flashcard or None when the session ends, plus an overridable record_result(correct: bool) hook for strategies that adapt
+- Implement SequentialMode: serve cards in the original file order (1, 2, 3, ...) and stop after the last card
+- Implement RandomMode: serve every card exactly once in a shuffled order; accept an injectable random.Random instance to enable deterministic tests
+- Implement AdaptiveMode: serve every card once on the first pass, then re-serve missed cards ordered by miss count (highest first, original index breaks ties), until every card has been answered correctly at least once
+- Provide a create_quiz_mode factory that maps a case-insensitive, whitespace-tolerant mode name to the matching concrete strategy and raises a friendly error for any unknown name
+- Wire main.py to instantiate the active QuizMode through the factory rather than inspecting the mode string directly
+      </functional_requirements>
+      <extensibility_requirements>
+- Adding a fourth mode must only require a new QuizMode subclass plus a single dispatch entry in the factory; no caller in main.py should need to change
+      </extensibility_requirements>
+    </requirements>
+    <constraints>
+      <architecture_principles>Strategy Pattern for the three modes, Factory Pattern for construction; keep main.py decoupled from the concrete strategy classes</architecture_principles>
+      <module_layout>Strategies live in utils/quiz_modes.py and the factory in utils/quiz_factory.py to keep the two patterns visibly separated</module_layout>
+      <dependencies>Standard library only (abc, collections, random, typing); no new third-party packages</dependencies>
+      <style>Pass black --check and mypy under the project's pyproject.toml settings; respect disallow_untyped_defs for production code</style>
+    </constraints>
+    <test_categories>
+- QuizMode base class: empty card list rejected, total property correct, abstract instantiation blocked, defensive copy of the input list
+- SequentialMode: original-order traversal, None after exhaustion, record_result is a no-op that does not change ordering
+- RandomMode: every card served exactly once, None after exhaustion, deterministic output with a seeded random.Random, observable shuffling versus the input order, works without an explicit rng
+- AdaptiveMode: first pass serves every card in order, all-correct ends after one pass, a missed card is re-served until mastered, miss-count prioritization with original-index tiebreaker, record_result before next_card is a no-op, a mastered card is never re-served
+- Factory: returns the correct concrete type per mode name, case-insensitive, whitespace-tolerant, rng is forwarded to RandomMode, rng is accepted but ignored by other modes, unknown mode raises a ValueError subclass, empty card list propagates the base class ValueError
+    </test_categories>
+    <success_criteria>
+- python main.py --file data/glossary.json --mode adaptive (and sequential, random) runs without crashing and reports the card count and selected mode
+- The full pytest suite passes with overall coverage at or above 80%
+- main.py contains no per-mode branching — it only calls create_quiz_mode and consumes the returned QuizMode
+    </success_criteria>
+  </prompt>
 </prompts_log>
