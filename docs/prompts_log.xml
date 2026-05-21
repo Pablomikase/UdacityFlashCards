@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompts_log project="FlashcardQuizzer" student_email="pdaa.900910@gmail.com">
+  <prompt id="001" date="2026-05-21">
+    <role>Python development environment engineer working on macOS/Linux</role>
+    <task>
+      Bootstrap the isolated Python working environment for the FlashcardQuizzer project and install every dependency declared in requirements.txt.
+    </task>
+    <context>
+      <operating_system>macOS / Linux with zsh or bash</operating_system>
+      <project>FlashcardQuizzer — Udacity AI-Powered Engineer course</project>
+      <python_runtime>System python3 (Python 3.9.5)</python_runtime>
+      <dependency_manifest>requirements.txt at the project root</dependency_manifest>
+    </context>
+    <commands>
+- python3 -m venv venv
+- source venv/bin/activate
+- pip install --upgrade pip
+- pip install -r requirements.txt
+    </commands>
+    <success_criteria>
+- A ./venv directory exists at the project root and is activatable
+- pip is upgraded to the latest available release inside the venv
+- Every package listed in requirements.txt installs without errors
+    </success_criteria>
+  </prompt>
+  <prompt id="002" date="2026-05-21">
+    <role>Senior Python engineer establishing a Definition of Done for the FlashcardQuizzer project</role>
+    <task>
+      Wire up the project's Definition of Done so that completion is gated by three automated checks: test execution, code formatting, and static type checking.
+    </task>
+    <context>
+      <project>FlashcardQuizzer — Udacity AI-Powered Engineer course</project>
+      <python_runtime>Python 3.9 inside ./venv</python_runtime>
+      <existing_layout>utils/, tests/, and main.py at the project root</existing_layout>
+      <preferred_config_location>A single pyproject.toml at the project root</preferred_config_location>
+    </context>
+    <tools>
+- pytest: execute the unit test suite under ./tests and report coverage of ./utils
+- black: enforce a single canonical Python code style across the repository
+- mypy: perform static type checking on the production code in ./utils and main.py
+    </tools>
+    <success_criteria>
+- pytest runs the full suite and rejects coverage below 80%
+- black --check exits cleanly with zero files needing reformatting
+- mypy reports zero errors against utils/ and main.py
+- A single command runs the three checks sequentially and fails on the first failing step
+    </success_criteria>
+  </prompt>
+  <prompt id="003" date="2026-05-21">
+    <role>Senior Python CLI engineer building the FlashcardQuizzer entry point</role>
+    <task>
+      Refactor main.py into a CLI scaffold so that "python main.py --help" lists every available flag and "python main.py --mode sequential --file data/glossary.json" loads the glossary without crashing.
+    </task>
+    <context>
+      <application>FlashcardQuizzer — a terminal flashcard quiz tool</application>
+      <runtime>Python 3.9 inside ./venv</runtime>
+      <starting_point>main.py is currently a TaskManager demo and must be replaced by the CLI entry point</starting_point>
+      <data_file>data/glossary.json — a JSON array of objects with string "front" and "back" fields</data_file>
+    </context>
+    <requirements>
+- Expose --help (and -h) listing every flag with its purpose and default value
+- Expose --file as a required path that must point to an existing readable file
+- Expose --mode as a choice of sequential, random, adaptive — default sequential — where adaptive is described as prioritizing cards the user gets wrong
+- Validate the glossary JSON: top-level array of objects, each with string "front" and "back" fields, and reject an empty list
+- Report how many cards were loaded and which mode was selected, then exit cleanly
+- Leave the actual interactive quiz loop for a later iteration and print a clear "not yet implemented" notice
+    </requirements>
+    <constraints>
+      <dependencies>Use the click package already declared in requirements.txt; no new dependencies</dependencies>
+      <style>main.py must pass black --check and mypy under the project's pyproject.toml settings</style>
+      <scope>Do not delete utils/task_manager.py or utils/file_handler.py — they remain available for later iterations</scope>
+    </constraints>
+    <success_criteria>
+- python main.py --help prints all three flags with descriptions and defaults
+- python main.py --mode sequential --file data/glossary.json runs without crashing and reports the card count
+- An invalid or missing --file value errors out with a useful message
+- black --check main.py and mypy main.py both pass
+    </success_criteria>
+  </prompt>
+  <prompt id="004" date="2026-05-21" milestone="Phase 1: Data Layer &amp; Validation">
+    <role>Senior Python engineer designing the data ingestion layer for the FlashcardQuizzer application</role>
+    <task>
+      Build a data-loading subsystem that reads a JSON glossary file, accepts two structural shapes, validates every card, and surfaces any failure as a user-friendly message instead of a Python traceback.
+    </task>
+    <context>
+      <application>FlashcardQuizzer — Python 3.9 CLI quiz tool</application>
+      <entry_point>main.py wraps the loader inside a click command and is responsible for printing the friendly message and exiting non-zero</entry_point>
+      <module_location>utils/data_loader.py — new module, separated from the CLI layer per separation of concerns</module_location>
+      <accepted_shapes>
+- Array format: a top-level JSON array of card objects
+- Object format: a top-level JSON object wrapping a "cards" array
+      </accepted_shapes>
+      <card_shape>Each card is a JSON object with non-empty string "front" and "back" fields</card_shape>
+    </context>
+    <example>
+Array format:
+[
+  {"front": "What is polymorphism?", "back": "..."}
+]
+
+Object format:
+{
+  "title": "OOP Glossary",
+  "cards": [
+    {"front": "What is encapsulation?", "back": "..."}
+  ]
+}
+    </example>
+    <requirements>
+      <functional_requirements>
+- Read and parse the JSON file at the given path
+- Accept either the array format or the object-wrapper format transparently
+- Reject empty card lists with a clear message
+- Validate every card has non-empty string "front" and "back" fields
+- Return a list of immutable Flashcard records preserving file order
+      </functional_requirements>
+      <error_handling_requirements>
+- Missing file, permission errors, and other I/O failures must produce a friendly message
+- Malformed JSON must include the line and column from the parser
+- Per-card validation errors must include the 1-based card index in the message
+- main.py must catch the loader's exception, print "Error: &lt;message&gt;" to stderr, and exit with code 1 — never a Python traceback
+      </error_handling_requirements>
+    </requirements>
+    <constraints>
+      <architecture_principles>Separation of concerns: I/O parsing and validation live in utils/data_loader.py; the CLI in main.py only orchestrates and reports</architecture_principles>
+      <dependencies>Standard library only for the loader (json, dataclasses, pathlib); no new third-party packages</dependencies>
+      <style>Pass black --check and mypy under the project's pyproject.toml settings; respect disallow_untyped_defs for production code</style>
+      <error_surface>Expose a single FlashcardDataError exception so callers have one type to catch</error_surface>
+    </constraints>
+    <class_under_test>utils.data_loader.load_flashcards and the FlashcardDataError it raises</class_under_test>
+    <test_categories>
+- Happy paths: array format, object format, multi-card ordering, immutability of returned cards
+- I/O errors: missing file, malformed JSON, unreadable file (POSIX only)
+- Top-level shape errors: wrong type at root, object missing the cards field, cards not an array, empty list in either format
+- Per-card shape errors: card not an object, missing front/back, non-string front/back, blank-string front/back, error message reports correct 1-based index for non-first card
+    </test_categories>
+    <success_criteria>
+- python main.py --file data/glossary.json (array format) loads cards and exits 0
+- python main.py --file data/glossary_object.json (object format) loads cards and exits 0
+- Malformed or invalid input produces a single-line friendly message on stderr and exit code 1, with no traceback
+- pytest suite passes with overall coverage at or above 80%
+- black --check and mypy both pass on the new and modified files
+    </success_criteria>
+  </prompt>
+</prompts_log>

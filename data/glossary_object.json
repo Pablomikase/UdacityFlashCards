@@ -1,0 +1,22 @@
+{
+  "title": "OOP & SOLID Glossary",
+  "description": "Sample wrapper-object format for FlashcardQuizzer.",
+  "cards": [
+    {
+      "front": "What is the Open/Closed Principle?",
+      "back": "Software entities should be open for extension but closed for modification."
+    },
+    {
+      "front": "What is the Liskov Substitution Principle?",
+      "back": "Subtypes must be substitutable for their base types without altering program correctness."
+    },
+    {
+      "front": "What is the Interface Segregation Principle?",
+      "back": "Clients should not be forced to depend on interfaces they do not use."
+    },
+    {
+      "front": "What is the Dependency Inversion Principle?",
+      "back": "High-level modules and low-level modules should both depend on abstractions, not on each other."
+    }
+  ]
+}

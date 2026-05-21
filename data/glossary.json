@@ -1,0 +1,22 @@
+[
+  {
+    "front": "What is polymorphism?",
+    "back": "The ability of different objects to respond to the same message in different ways."
+  },
+  {
+    "front": "What is encapsulation?",
+    "back": "Bundling data and methods that operate on that data within a single unit, hiding internal state."
+  },
+  {
+    "front": "What is inheritance?",
+    "back": "A mechanism by which one class acquires the properties and behaviors of another class."
+  },
+  {
+    "front": "What is the Single Responsibility Principle?",
+    "back": "A class should have only one reason to change — it should do exactly one well-scoped thing."
+  },
+  {
+    "front": "What is dependency injection?",
+    "back": "Providing a component's collaborators from the outside instead of having it construct them itself."
+  }
+]
