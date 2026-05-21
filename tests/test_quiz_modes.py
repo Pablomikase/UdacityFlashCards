@@ -1,4 +1,9 @@
-"""Tests for utils.quiz_modes (Strategy Pattern)."""
+"""Tests for utils.quiz_modes (Strategy Pattern) and the quiz mode factory.
+
+The first two tests below match the names called out by the project rubric
+(``test_quiz_mode_factory``, ``test_adaptive_mode_behavior``); the rest of
+the file covers the full Strategy contract for completeness.
+"""
 
 from __future__ import annotations
 
@@ -8,11 +13,44 @@ from typing import List
 import pytest
 
 from utils.data_loader import Flashcard
+from utils.quiz_factory import create_quiz_mode
 from utils.quiz_modes import AdaptiveMode, QuizMode, RandomMode, SequentialMode
 
 
 def _cards(*fronts: str) -> List[Flashcard]:
     return [Flashcard(front=f, back=f"ans-{f}") for f in fronts]
+
+
+# --- rubric-required tests --------------------------------------------------
+
+
+def test_quiz_mode_factory():
+    """``create_quiz_mode`` returns the correct concrete class per mode name."""
+    cards = _cards("a", "b", "c")
+    assert isinstance(create_quiz_mode("sequential", cards), SequentialMode)
+    assert isinstance(create_quiz_mode("random", cards), RandomMode)
+    assert isinstance(create_quiz_mode("adaptive", cards), AdaptiveMode)
+
+
+def test_adaptive_mode_behavior():
+    """AdaptiveMode re-serves a missed card until the user gets it right."""
+    cards = _cards("a", "b")
+    mode = AdaptiveMode(cards)
+
+    # First pass: answer card A wrong, card B right.
+    assert mode.next_card() == cards[0]
+    mode.record_result(False)
+    assert mode.next_card() == cards[1]
+    mode.record_result(True)
+
+    # Card A must come back because it was missed; card B must NOT come back.
+    assert mode.next_card() == cards[0]
+    mode.record_result(False)  # still wrong
+    assert mode.next_card() == cards[0]
+    mode.record_result(True)  # finally mastered
+
+    # Session ends once every missed card has been answered correctly.
+    assert mode.next_card() is None
 
 
 # --- base class -------------------------------------------------------------

@@ -1,4 +1,10 @@
-"""Tests for utils.data_loader."""
+"""Tests for ``utils.data_loader`` (a.k.a. the flashcard loader).
+
+The first three tests below mirror the names called out by the project
+rubric (``test_load_valid_flashcards_array``, ``test_load_invalid_json``,
+``test_load_missing_required_field``); the rest of the file exercises the
+remaining loader contract for completeness.
+"""
 
 from __future__ import annotations
 
@@ -11,12 +17,49 @@ import pytest
 from utils.data_loader import Flashcard, FlashcardDataError, load_flashcards
 
 
-# --- happy paths ------------------------------------------------------------
-
-
 def _write(path: Path, payload: object) -> Path:
     path.write_text(json.dumps(payload), encoding="utf-8")
     return path
+
+
+# --- rubric-required tests --------------------------------------------------
+
+
+def test_load_valid_flashcards_array(tmp_path: Path):
+    """A bare JSON array of cards loads into ``Flashcard`` instances in order."""
+    payload = [
+        {"front": "capital of France", "back": "Paris"},
+        {"front": "2 + 2", "back": "4"},
+    ]
+    file_path = _write(tmp_path / "glossary.json", payload)
+
+    cards = load_flashcards(file_path)
+
+    assert cards == [
+        Flashcard(front="capital of France", back="Paris"),
+        Flashcard(front="2 + 2", back="4"),
+    ]
+
+
+def test_load_invalid_json(tmp_path: Path):
+    """Malformed JSON surfaces as a friendly ``FlashcardDataError``, not a traceback."""
+    bad = tmp_path / "broken.json"
+    bad.write_text("{this is not valid json", encoding="utf-8")
+
+    with pytest.raises(FlashcardDataError, match="not valid JSON"):
+        load_flashcards(bad)
+
+
+def test_load_missing_required_field(tmp_path: Path):
+    """A card without a ``"back"`` field is rejected with a clear message."""
+    payload = [{"front": "What is the answer?"}]  # no "back" key
+    file_path = _write(tmp_path / "broken.json", payload)
+
+    with pytest.raises(FlashcardDataError, match="non-empty string 'back' field"):
+        load_flashcards(file_path)
+
+
+# --- happy paths ------------------------------------------------------------
 
 
 def test_array_format_loads(tmp_path):

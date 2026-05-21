@@ -231,4 +231,35 @@ Object format:
 - The full pytest suite passes with overall coverage at or above 80%
     </success_criteria>
   </prompt>
+  <prompt id="007" date="2026-05-21" milestone="Phase 4: Testing">
+    <role>Student aligning the FlashcardQuizzer pytest suite with the rubric-mandated file and function names while keeping coverage above 80%</role>
+    <task>
+      Reorganize the existing tests so the rubric-required filenames and test functions exist verbatim, and confirm the full suite still passes pytest --cov=. --cov-report=html above the 80% threshold.
+    </task>
+    <context>
+      <application>FlashcardQuizzer — Python 3.9 CLI quiz tool</application>
+      <starting_point>tests/ already contains test_data_loader.py, test_quiz_modes.py, test_quiz_factory.py, test_quiz_session.py, test_main_cli.py and helper module tests; baseline run is 102 passed at 97.80% coverage</starting_point>
+      <rubric_mapping>
+- test_flashcard_loader.py must define test_load_valid_flashcards_array, test_load_invalid_json, and test_load_missing_required_field
+- test_quiz_modes.py must define test_quiz_mode_factory and test_adaptive_mode_behavior
+- test_integration.py must define test_full_session that simulates a user answering 3 questions and checks the final stats calculation
+      </rubric_mapping>
+    </context>
+    <requirements>
+      <functional_requirements>
+- Rename tests/test_data_loader.py to tests/test_flashcard_loader.py and add the three rubric-named tests at the top of the file, keeping the existing loader tests for extra coverage
+- Add test_quiz_mode_factory (verifies create_quiz_mode returns SequentialMode, RandomMode, AdaptiveMode for the matching mode names) and test_adaptive_mode_behavior (verifies AdaptiveMode re-serves missed cards until mastered while not re-serving already-correct cards) to tests/test_quiz_modes.py
+- Create tests/test_integration.py with test_full_session that writes a 3-card glossary to tmp_path, loads it with load_flashcards, builds a SequentialMode via create_quiz_mode, drives run_session with a scripted input_fn producing 2 correct and 1 incorrect answer, and asserts on stats.correct, stats.incorrect, stats.accuracy, stats.per_card, and the render_summary output
+      </functional_requirements>
+      <non_functional_requirements>
+- Preserve the existing test organization and docstring style
+- Do not introduce new runtime dependencies; rely on pytest, tmp_path, io.StringIO, and the project's own modules
+      </non_functional_requirements>
+    </requirements>
+    <success_criteria>
+- pytest --cov=. --cov-report=html reports all tests passing with total coverage at or above 80%
+- pytest -v selects all six rubric-named tests by their exact qualified names and they all pass
+- htmlcov/index.html is regenerated for review
+    </success_criteria>
+  </prompt>
 </prompts_log>
