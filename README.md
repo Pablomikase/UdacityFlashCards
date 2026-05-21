@@ -1,218 +1,184 @@
-# AI-Assisted Development Project Starter
+# FlashcardQuizzer
 
-This is a Python project template for learning AI-assisted software development. You will build upon this foundation to create a functional application while collaborating with AI coding assistants to apply software engineering best practices including design patterns, separation of concerns, test-driven development, and comprehensive documentation.
+An interactive Python 3.9 command-line flashcard quiz. Point it at a JSON glossary, pick one of three card-ordering strategies, and study at the terminal with green/red ANSI feedback and an end-of-session summary.
 
-## 🚀 Getting Started
+The application is structured around two design patterns that live together in `utils/quiz_engine.py`:
 
-### Prerequisites
+- **Strategy Pattern** — `QuizMode` abstract base class with three interchangeable concrete strategies (`SequentialMode`, `RandomMode`, `AdaptiveMode`).
+- **Factory Pattern** — `create_quiz_mode(name, cards, *, rng=None)` resolves a CLI mode name to the matching strategy, so `main.py` never imports the concrete classes.
 
-- Python 3.8 or higher
-- pip (Python package manager)
-- Git
-
-### Setup Instructions
-
-1. **Create a virtual environment:**
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\\Scripts\\activate
-   ```
-
-2. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Run the application:**
-   ```bash
-   python main.py
-   ```
-
-4. **Run tests:**
-   ```bash
-   pytest
-   ```
-
-### 🛠️ Development Tools
-
-#### Code Quality Tools
-
-- **Black**: Code formatter
-  ```bash
-  black .
-  ```
-
-- **isort**: Import organizer
-  ```bash
-  isort .
-  ```
-
-- **flake8**: Linting
-  ```bash
-  flake8 .
-  ```
-
-- **mypy**: Type checking
-  ```bash
-  mypy .
-  ```
-
-- **pytest**: Testing framework
-  ```bash
-  pytest --cov=. --cov-report=html
-  ```
-
-#### Pre-commit Hooks (Optional)
-
-Set up pre-commit hooks for automatic code quality checks:
+## Quick Start
 
 ```bash
-pre-commit install
+# Clone and enter the project
+git clone https://github.com/Pablomikase/UdacityFlashCards.git
+cd UdacityFlashCards
+
+# Create and activate a virtual environment
+python3 -m venv venv
+source venv/bin/activate          # Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install --upgrade pip
+pip install -r requirements.txt
+
+# Run the rubric-spec command (adaptive mode)
+python main.py -m adaptive -f data/python_basics.json
 ```
 
-## Testing
+Type your answer at each prompt. Type `exit`, `quit`, or `:q` (or press Ctrl+C / Ctrl+D) to leave the session early — you will still get the summary.
 
-The project includes comprehensive unit tests demonstrating proper testing practices for AI-assisted development.
+## Features
 
-### Tests Break Down
+- **Three quiz modes** wired through Strategy + Factory:
+  - `sequential` — cards in file order (default).
+  - `random` — every card once, shuffled. Accepts an injectable `random.Random` for deterministic tests.
+  - `adaptive` — every card once, then re-serves missed cards prioritized by miss count until each card has been answered correctly at least once.
+- **Two glossary shapes accepted** — bare JSON array of `{front, back}` objects, or an object wrapper `{"cards": [...]}`. See `data/glossary.json` and `data/glossary_object.json`.
+- **Friendly errors instead of tracebacks.** Missing file, unreadable file, malformed JSON (with line/column), wrong top-level shape, or per-card validation failures all produce a single line on `stderr` and exit code 1.
+- **ANSI feedback** — correct answers in green, incorrect in red. Auto-disabled on non-TTY streams and when `NO_COLOR` is set. Forceable off with `--no-color`.
+- **`--stats` per-card breakdown** — appended to the summary, listing how many times each card was answered correctly vs. incorrectly.
+- **Graceful exit on every signal** — `exit` / `quit` / `:q`, Ctrl+C, Ctrl+D, and SIGINT raised during I/O all exit cleanly with a summary; no Python traceback ever reaches the user.
 
-**TaskManager Tests (`test_task_manager.py`):**
-- `test_add_task_returns_id()` - Verifies task creation returns valid ID
-- `test_get_task_by_id()` - Tests task retrieval with proper data structure
-- `test_complete_task()` - Validates task completion with timestamps
-- `test_delete_task()` - Ensures proper task deletion and error handling
-- `test_get_nonexistent_task_raises_error()` - Tests error handling for invalid IDs
+## CLI Reference
 
-**FileHandler Tests (`test_file_handler.py`):**
-- `test_save_data_creates_file()` - Verifies JSON file creation and content
-- `test_load_nonexistent_file_returns_empty_dict()` - Tests graceful error handling
-- `test_file_exists()` - Validates file existence checking
-- `test_delete_file()` - Tests file cleanup functionality
-- `test_list_files()` - Verifies directory listing capabilities
+```
+python main.py -f PATH [-m {sequential,random,adaptive}] [--stats] [--no-color]
+```
+
+| Flag | Description | Default |
+|---|---|---|
+| `-f`, `--file` | Path to a JSON glossary file (required). | — |
+| `-m`, `--mode` | Card ordering strategy: `sequential`, `random`, or `adaptive`. | `sequential` |
+| `--stats` | Append a per-card correctness breakdown to the end-of-session summary. | off |
+| `--no-color` | Disable ANSI color output (also honored via `NO_COLOR`). | colors on |
+
+### Glossary JSON format
+
+Array form (`data/glossary.json`, `data/python_basics.json`):
+
+```json
+[
+  { "front": "What keyword defines a function in Python?", "back": "def" },
+  { "front": "Which built-in returns the length of a sequence?", "back": "len" }
+]
+```
+
+Object form (`data/glossary_object.json`):
+
+```json
+{
+  "title": "Python Basics",
+  "cards": [
+    { "front": "What keyword defines a function in Python?", "back": "def" }
+  ]
+}
+```
+
+Both `front` and `back` must be non-empty strings; an empty card list is rejected.
+
+## Project Structure
+
+```
+.
+├── main.py                          # argparse CLI entry point (orchestration only)
+├── utils/
+│   ├── __init__.py
+│   ├── colors.py                    # ANSI helpers + NO_COLOR / non-TTY auto-detect
+│   ├── data_loader.py               # load_flashcards + FlashcardDataError
+│   ├── quiz_engine.py               # Strategy (QuizMode + 3 strategies) + Factory
+│   ├── quiz_session.py              # Interactive loop, SessionStats, render_summary
+│   ├── file_handler.py              # (starter utility, retained for course continuity)
+│   └── task_manager.py              # (starter utility, retained for course continuity)
+├── tests/                           # 108 tests, 97.77% branch coverage
+│   ├── test_flashcard_loader.py     # rubric-named loader tests
+│   ├── test_quiz_modes.py           # rubric-named Strategy tests
+│   ├── test_quiz_factory.py         # Factory dispatch + rng injection
+│   ├── test_quiz_session.py         # session loop + stats
+│   ├── test_main_cli.py             # argparse + main() integration
+│   ├── test_integration.py          # full pipeline on a tmpfile glossary
+│   ├── test_colors.py
+│   ├── test_file_handler.py
+│   └── test_task_manager.py
+├── data/
+│   ├── python_basics.json           # 10 Python-basics cards (array form)
+│   ├── glossary.json                # OOP glossary (array form)
+│   └── glossary_object.json         # Same content in object-wrapper form
+├── docs/
+│   ├── final_project_report.md      # Final course report
+│   ├── ai_edit_log.md               # 7 detailed AI-collaboration entries
+│   ├── prompts_log.xml              # 7 XML-structured prompts (one per phase)
+│   ├── design_patterns.md           # Pattern reference
+│   ├── project_rubric.md            # Graded criteria
+│   └── report_template.md           # Empty template (course-provided)
+├── ai_guidance/                     # XML prompt-template + review checklist
+├── .claude/                         # Claude Code config: CLAUDE.md, skills, MCP
+├── scripts/done_check.sh            # Runs black + mypy + pytest (Definition of Done)
+├── pyproject.toml                   # pytest, black, mypy config
+├── .flake8                          # flake8 config (max-line-length=88, aligned with black)
+├── .editorconfig
+├── requirements.txt
+└── README.md
+```
+
+## Quality Gates
+
+The project's Definition of Done is enforced by four tools driven from `pyproject.toml` and `.flake8`:
 
 ```bash
-# Run all tests
-pytest
-
-# Run with coverage report (aim for >80% coverage)
-pytest --cov=. --cov-report=html
-
-# Run specific test file with verbose output
-pytest tests/test_task_manager.py -v
-
-# Run all quality checks
-black . && isort . && flake8 . && mypy . && pytest
+black --check .                      # formatting
+flake8 .                             # linting (max-line-length=88, matches black)
+mypy utils main.py                   # static typing (disallow_untyped_defs=True for production)
+pytest                               # 108 tests, --cov-fail-under=80, branch coverage
 ```
 
-## Project Instructions
+A single-command sweep is available:
 
-This section contains all the student deliverables for this project.
-
-### Learning Objectives
-- **AI Collaboration**: Learn to effectively work with AI assistants to generate, review, and refactor code while maintaining code quality
-- **Software Engineering**: Apply design patterns, separation of concerns, and modular architecture
-- **Test-Driven Development**: Write and maintain comprehensive unit tests with good coverage
-- **Code Quality**: Use linting, formatting, and type checking tools for professional-grade code
-- **Documentation**: Document AI interactions and development decisions throughout the process
-
-### AI-Assisted Development Workflow
-
-#### 1. Planning Phase
-- Use AI to help break down requirements into smaller, manageable tasks
-- Ask for architectural suggestions and design pattern recommendations
-- Review the `/ai_guidance/prompting_best_practices.md` for effective prompting techniques
-- Use the provided slash commands in `/.claude/commands/` for common tasks
-
-#### 2. Implementation Phase
-- Generate initial code with AI assistance using specific, contextual prompts
-- Always review and understand AI-generated code before accepting it
-- Test AI-generated code thoroughly with various inputs and edge cases
-- Refactor for clarity, maintainability, and adherence to project standards
-
-#### 3. Review Phase
-- Use AI to help identify potential issues or improvements
-- Follow the `/ai_guidance/code_review_checklist.md` for systematic code review
-- Ask for code review suggestions and alternative implementations
-- Validate that the code follows project conventions and security best practices
-
-#### 4. Documentation Phase
-- Document your AI interactions in `/docs/ai_edit_log.md` with specific examples
-- Explain your decisions and modifications to AI suggestions
-- Complete the final report using `/docs/report_template.md`
-- Update this README with new features and learnings
-
-### Assessment Criteria
-
-Your project will be evaluated on:
-
-1. **Functionality**: Does the application work as intended with proper error handling?
-2. **Code Quality**: Is the code well-structured, readable, and maintainable?
-3. **Testing**: Are there comprehensive unit tests with good coverage (>80%)?
-4. **AI Collaboration**: Did you effectively use AI assistance while maintaining code quality?
-5. **Documentation**: Are your AI interactions and decisions well-documented?
-
-### Example AI Prompts
-
-- "Help me implement a priority queue for tasks using the strategy pattern"
-- "Review this code for potential security vulnerabilities"
-- "Suggest improvements to make this code more maintainable"
-- "Help me write comprehensive unit tests for this function"
-
-### AI Guidance Resources
-
-- `/ai_guidance/prompting_best_practices.md` - Learn effective AI prompting techniques
-- `/ai_guidance/code_review_checklist.md` - Systematic approach to reviewing AI-generated code
-- `/.claude/commands/generate-function` - Generate well-structured Python functions
-- `/.claude/commands/review-code` - Get comprehensive code reviews
-- `/.claude/commands/debug-help` - Debug issues with AI assistance
-- `/.claude/commands/refactor-code` - Refactor code with design patterns
-- `/docs/design_patterns.md` - Examples of implementing design patterns with AI assistance
-
-### Project Structure
-
+```bash
+./scripts/done_check.sh
 ```
-starter/
-├── main.py                 # Main application entry point
-├── utils/                  # Utility modules
-│   ├── __init__.py
-│   ├── task_manager.py     # Task management functionality
-│   └── file_handler.py     # File I/O operations
-├── tests/                  # Unit test suite
-│   ├── __init__.py
-│   ├── test_task_manager.py
-│   └── test_file_handler.py
-├── docs/                   # Documentation and templates
-│   ├── ai_edit_log.md      # AI interaction tracking
-│   ├── design_patterns.md  # Design pattern examples
-│   └── report_template.md  # Final report template
-├── ai_guidance/            # AI prompting best practices
-│   ├── prompting_best_practices.md
-│   └── code_review_checklist.md
-├── .claude/                # Claude-specific configuration
-│   ├── CLAUDE.md           # Claude configuration
-│   ├── commands/           # Slash commands
-│   └── mcp.json           # MCP configuration
-├── requirements.txt        # Python dependencies
-├── .editorconfig          # Code formatting rules
-└── README.md              # This file
+
+Current metrics:
+
+- **Tests:** 108 passing
+- **Branch coverage:** 97.77% (target: ≥ 80%)
+- **flake8:** clean
+- **black --check:** clean
+- **mypy:** clean
+
+To regenerate the HTML coverage report:
+
+```bash
+pytest --cov=utils --cov-branch --cov-report=html
+open htmlcov/index.html              # macOS; use xdg-open on Linux
 ```
+
+## Extending the Quiz Engine
+
+Adding a fourth mode (e.g. spaced-repetition) is intentionally cheap thanks to the Strategy + Factory split:
+
+1. Add a new `QuizMode` subclass to `utils/quiz_engine.py` implementing `next_card()` and, if the strategy is adaptive, overriding `record_result(correct)`.
+2. Add one dispatch line to `create_quiz_mode()` and one entry to the `QUIZ_MODES` tuple.
+3. Add unit tests that exercise the new strategy through the public interface.
+
+`main.py` and `utils/quiz_session.py` do not change.
+
+## AI Collaboration
+
+This project was built almost entirely through AI collaboration with Claude (via the Claude Code CLI). The full history is in:
+
+- `docs/ai_edit_log.md` — seven narrative entries (context, prompt, AI response, changes, reasoning, outcome, lessons).
+- `docs/prompts_log.xml` — the same seven prompts in XML form, with explicit `<role>`, `<task>`, `<context>`, `<requirements>`, `<constraints>`, and `<success_criteria>` children. Auto-captured by a `prompt-logger` skill configured in `.claude/skills/`.
+
+See `docs/final_project_report.md` for the full reflection on the workflow.
 
 ## Built With
 
-* [Python](https://www.python.org/) - Core programming language
-* [pytest](https://docs.pytest.org/) - Testing framework for comprehensive unit tests
-* [pytest-cov](https://pytest-cov.readthedocs.io/) - Coverage reporting for tests
-* [Black](https://black.readthedocs.io/) - Code formatter for consistent style
-* [isort](https://pycqa.github.io/isort/) - Import organizer for clean code structure
-* [flake8](https://flake8.pycqa.org/) - Linting tool for code quality
-* [mypy](https://mypy.readthedocs.io/) - Static type checker for better code reliability
-* [pre-commit](https://pre-commit.com/) - Git hook framework for automated quality checks
-* [Claude](https://claude.ai/) - AI assistant for code generation and review
+- [Python 3.9](https://www.python.org/)
+- [pytest](https://docs.pytest.org/) + [pytest-cov](https://pytest-cov.readthedocs.io/)
+- [black](https://black.readthedocs.io/), [flake8](https://flake8.pycqa.org/), [mypy](https://mypy.readthedocs.io/)
+- [Claude Code](https://claude.com/claude-code) — AI pair-programming CLI
 
 ## License
 
 [License](LICENSE.txt)
-
----
-
-**Remember**: The goal is not just to build a working application, but to learn how to effectively collaborate with AI while maintaining high software engineering standards. Take time to understand the code, ask questions, and document your learning journey!
