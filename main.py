@@ -15,7 +15,11 @@ from typing import Optional, Sequence
 
 from utils.colors import YELLOW, colorize, colors_enabled
 from utils.data_loader import FlashcardDataError, load_flashcards
-from utils.quiz_factory import QUIZ_MODES, UnknownQuizModeError, create_quiz_mode
+from utils.quiz_engine import (
+    QUIZ_MODES,
+    UnknownQuizModeError,
+    create_quiz_mode,
+)
 from utils.quiz_session import render_summary, run_session
 
 

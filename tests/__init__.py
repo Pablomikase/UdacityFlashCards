@@ -1,6 +1,5 @@
-"""
-Test suite for the AI-assisted development project.
+"""Test suite for the FlashcardQuizzer project.
 
-This package contains unit tests that demonstrate proper testing
-practices and help students learn test-driven development.
+This package contains unit and integration tests covering the data
+loader, quiz engine (Strategy + Factory patterns), and CLI layer.
 """

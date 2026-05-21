@@ -1,11 +1,18 @@
-"""Strategy Pattern: ``QuizMode`` and its concrete implementations.
+"""Quiz engine: Strategy Pattern (QuizMode hierarchy) + Factory Pattern.
 
-Each :class:`QuizMode` subclass encapsulates one ordering strategy for
-serving flashcards during a quiz session. Callers consume cards through
-:meth:`QuizMode.next_card` and report outcomes through
-:meth:`QuizMode.record_result`. The base class records nothing by default,
-so strategies that do not adapt (Sequential, Random) need not override the
-result hook.
+This module hosts the two design patterns the rubric inspects:
+
+* **Strategy Pattern** — :class:`QuizMode` is an abstract base class with
+  three interchangeable concrete strategies (:class:`SequentialMode`,
+  :class:`RandomMode`, :class:`AdaptiveMode`). Each strategy encapsulates
+  one card-ordering policy and is consumed through the same
+  ``next_card`` / ``record_result`` interface, so the session loop has no
+  knowledge of which policy is active.
+
+* **Factory Pattern** — :func:`create_quiz_mode` maps a mode name to the
+  matching concrete strategy. Callers (e.g. ``main.py``) pick a strategy
+  by name without importing or branching on the concrete classes, so a
+  new mode can be added by extending only the dispatch table here.
 """
 
 from __future__ import annotations
@@ -16,6 +23,11 @@ from collections import deque
 from typing import Deque, Dict, List, Optional, Sequence, Set
 
 from utils.data_loader import Flashcard
+
+
+# ---------------------------------------------------------------------------
+# Strategy Pattern
+# ---------------------------------------------------------------------------
 
 
 class QuizMode(ABC):
@@ -126,3 +138,47 @@ class AdaptiveMode(QuizMode):
             self._miss_counts.pop(idx, None)
         else:
             self._miss_counts[idx] = self._miss_counts.get(idx, 0) + 1
+
+
+# ---------------------------------------------------------------------------
+# Factory Pattern
+# ---------------------------------------------------------------------------
+
+
+QUIZ_MODES = ("sequential", "random", "adaptive")
+
+
+class UnknownQuizModeError(ValueError):
+    """Raised when the requested quiz mode name is not recognized."""
+
+
+def create_quiz_mode(
+    mode_name: str,
+    cards: Sequence[Flashcard],
+    *,
+    rng: Optional[random.Random] = None,
+) -> QuizMode:
+    """Build the :class:`QuizMode` strategy named by ``mode_name``.
+
+    Args:
+        mode_name: Case-insensitive mode identifier (leading/trailing
+            whitespace is tolerated). Must be one of :data:`QUIZ_MODES`.
+        cards: Flashcards the session will draw from.
+        rng: Optional ``random.Random`` used by :class:`RandomMode` to
+            produce deterministic shuffles in tests. Ignored by other
+            modes.
+
+    Raises:
+        UnknownQuizModeError: If ``mode_name`` is not a recognized mode.
+    """
+    name = mode_name.strip().lower()
+    if name == "sequential":
+        return SequentialMode(cards)
+    if name == "random":
+        return RandomMode(cards, rng=rng)
+    if name == "adaptive":
+        return AdaptiveMode(cards)
+    raise UnknownQuizModeError(
+        f"Unknown quiz mode: {mode_name!r}. "
+        f"Valid modes: {', '.join(QUIZ_MODES)}."
+    )

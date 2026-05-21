@@ -1,4 +1,4 @@
-"""Tests for utils.quiz_modes (Strategy Pattern) and the quiz mode factory.
+"""Tests for the Strategy Pattern and the factory in utils.quiz_engine.
 
 The first two tests below match the names called out by the project rubric
 (``test_quiz_mode_factory``, ``test_adaptive_mode_behavior``); the rest of
@@ -13,8 +13,13 @@ from typing import List
 import pytest
 
 from utils.data_loader import Flashcard
-from utils.quiz_factory import create_quiz_mode
-from utils.quiz_modes import AdaptiveMode, QuizMode, RandomMode, SequentialMode
+from utils.quiz_engine import (
+    AdaptiveMode,
+    QuizMode,
+    RandomMode,
+    SequentialMode,
+    create_quiz_mode,
+)
 
 
 def _cards(*fronts: str) -> List[Flashcard]:

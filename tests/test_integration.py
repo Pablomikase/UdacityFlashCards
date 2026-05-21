@@ -16,7 +16,7 @@ from typing import Iterator, List
 import pytest
 
 from utils.data_loader import load_flashcards
-from utils.quiz_factory import create_quiz_mode
+from utils.quiz_engine import create_quiz_mode
 from utils.quiz_session import render_summary, run_session
 
 

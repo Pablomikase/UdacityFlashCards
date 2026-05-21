@@ -1,4 +1,4 @@
-"""Tests for utils.quiz_factory (Factory Pattern)."""
+"""Tests for the Factory Pattern in utils.quiz_engine."""
 
 from __future__ import annotations
 
@@ -7,12 +7,14 @@ import random
 import pytest
 
 from utils.data_loader import Flashcard
-from utils.quiz_factory import (
+from utils.quiz_engine import (
     QUIZ_MODES,
+    AdaptiveMode,
+    RandomMode,
+    SequentialMode,
     UnknownQuizModeError,
     create_quiz_mode,
 )
-from utils.quiz_modes import AdaptiveMode, RandomMode, SequentialMode
 
 
 @pytest.fixture()

@@ -1,6 +1,6 @@
 """Interactive quiz session loop and end-of-session statistics reporter.
 
-The :func:`run_session` coroutine drives a :class:`~utils.quiz_modes.QuizMode`
+The :func:`run_session` coroutine drives a :class:`~utils.quiz_engine.QuizMode`
 through its cards, prompting the user for an answer per card and recording
 the outcome on both the strategy (so adaptive modes can re-serve missed
 cards) and a :class:`SessionStats` accumulator (used to render the final
@@ -29,7 +29,7 @@ from utils.colors import (
     red,
 )
 from utils.data_loader import Flashcard
-from utils.quiz_modes import QuizMode
+from utils.quiz_engine import QuizMode
 
 EXIT_COMMANDS = frozenset({"exit", "quit", ":q"})
 

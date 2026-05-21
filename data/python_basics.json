@@ -1,0 +1,42 @@
+[
+  {
+    "front": "What keyword defines a function in Python?",
+    "back": "def"
+  },
+  {
+    "front": "Which built-in returns the length of a sequence?",
+    "back": "len"
+  },
+  {
+    "front": "What data type is created by surrounding text with quotes?",
+    "back": "str"
+  },
+  {
+    "front": "Which immutable ordered collection uses parentheses?",
+    "back": "tuple"
+  },
+  {
+    "front": "Which built-in converts an iterable into a list?",
+    "back": "list"
+  },
+  {
+    "front": "Which keyword creates an alias inside an import statement?",
+    "back": "as"
+  },
+  {
+    "front": "Which keyword is used to define an anonymous function?",
+    "back": "lambda"
+  },
+  {
+    "front": "What symbol starts a single-line comment in Python?",
+    "back": "#"
+  },
+  {
+    "front": "Which built-in raises an error if a condition is False?",
+    "back": "assert"
+  },
+  {
+    "front": "Which method removes and returns the last item from a list?",
+    "back": "pop"
+  }
+]

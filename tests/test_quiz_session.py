@@ -8,7 +8,7 @@ from typing import Iterator, List
 import pytest
 
 from utils.data_loader import Flashcard
-from utils.quiz_modes import SequentialMode
+from utils.quiz_engine import SequentialMode
 from utils.quiz_session import (
     EXIT_COMMANDS,
     SessionStats,

@@ -1,14 +1,2 @@
 {
-  "hooks": {
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "echo '<system-reminder>After answering this prompt, invoke the prompt-logger skill to capture it in docs/prompts_log.xml as a refined English XML entry. Skip only if the user opts out, the message is trivially conversational, or it is a direct instruction to the logger itself.</system-reminder>'"
-          }
-        ]
-      }
-    ]
-  }
 }
